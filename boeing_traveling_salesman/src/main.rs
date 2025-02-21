@@ -234,6 +234,7 @@ fn main() {
             // Check if the matrix is 20x20 or smaller
             if distance_matrix.len() <= 20 && distance_matrix.iter().all(|row| row.len() <= 20) {
                 let (cost, path) = held_karp_algorithm(&distance_matrix);
+                println!("Held_Karps_Optimal solution algorithm-");
                 println!("Minimum Cost: {}", cost);
                 println!("Optimal Path: {:?}", path);
             } else {
@@ -247,6 +248,7 @@ fn main() {
         match read_csv_as_hashmap(filename) {
             Ok((mut distances, amount_of_nodes)) => {  // ✅ Correct tuple destructuring
                 let (cost, path) = nearest_neighbor_full_graph(&mut distances, amount_of_nodes);
+                println!("Nearest Neighbor full world solution algorithm-");
                 println!("Minimum Cost: {}", cost);
                 println!("Optimal Path: {:?}", path);
             }
