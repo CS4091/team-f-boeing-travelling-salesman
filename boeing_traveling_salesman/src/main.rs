@@ -1,16 +1,17 @@
-use std::fs;
-use std::error::Error;
+use bitvec::prelude::*;
+use bitvec::prelude::*;
 use std::cmp::Ordering;
-use std::f64::INFINITY;
 use std::collections::HashMap;
-use std::hash::{Hash,Hasher};
-use std::io;
-use bitvec::prelude::*;
-use std::process;
 use std::collections::LinkedList;
-use bitvec::prelude::*;
+use std::error::Error;
+use std::f64::INFINITY;
+use std::fs;
+use std::hash::{Hash, Hasher};
+use std::io;
+use std::process;
 
-fn read_csv_as_matrix(filename: &str) -> Result<Vec<Vec<f64>>, Box<dyn Error>> { //provides a distance matrix for held_karp_algorithm
+fn read_csv_as_matrix(filename: &str) -> Result<Vec<Vec<f64>>, Box<dyn Error>> {
+    //provides a distance matrix for held_karp_algorithm
     let contents = fs::read_to_string(filename)?; // Read the entire file
     let mut lines = contents.lines();
 
@@ -45,7 +46,7 @@ fn read_csv_as_matrix(filename: &str) -> Result<Vec<Vec<f64>>, Box<dyn Error>> {
     // Fill the matrix with parsed distances
     for (i, j, cost) in edges {
         matrix[i][j] = cost;
-    //    matrix[j][i] = cost; // Assuming undirected graph
+        //    matrix[j][i] = cost; // Assuming undirected graph
     }
 
     // Set diagonal to 0 (distance from node to itself)
@@ -55,9 +56,6 @@ fn read_csv_as_matrix(filename: &str) -> Result<Vec<Vec<f64>>, Box<dyn Error>> {
 
     Ok(matrix)
 }
-
-
-
 
 fn held_karp_algorithm(distance_matrix: &Vec<Vec<f64>>) -> (f64, Vec<usize>) {
     let n = distance_matrix.len();
@@ -111,20 +109,15 @@ fn held_karp_algorithm(distance_matrix: &Vec<Vec<f64>>) -> (f64, Vec<usize>) {
     }
 
     path.reverse(); // Reverse the path to get the correct order
-    
 
     (min_cost, path)
 }
 
-
-
-
-
-
-
-fn read_csv_as_hashmap(filename: &str) -> Result<(HashMap<usize, HashMap<usize,f64>>, usize), io::Error> { 
+fn read_csv_as_hashmap(
+    filename: &str,
+) -> Result<(HashMap<usize, HashMap<usize, f64>>, usize), io::Error> {
     // Makes A nested HashMap, first node given gives you another hashMap, then give node you are heading to, to get cost
-    // Saves space when dealing with sparse trees and provides quick look up of costs. 
+    // Saves space when dealing with sparse trees and provides quick look up of costs.
     let mut distances: HashMap<usize, HashMap<usize, f64>> = HashMap::new();
     let contents = fs::read_to_string(filename)?; // Read the entire file
     let mut lines = contents.lines();
@@ -154,10 +147,11 @@ fn read_csv_as_hashmap(filename: &str) -> Result<(HashMap<usize, HashMap<usize,f
     let mut amount_of_nodes: usize = 0;
     for (i, j, cost) in edges {
         // Insert or append the (j, cost) tuple to the vector at distances[i]
-        distances.entry(i)
-            .or_insert_with(|| HashMap::new())  // If the key i doesn't exist, initialize a new vector
-            .insert(j, cost);         // Append (j, cost) to the vector
-    
+        distances
+            .entry(i)
+            .or_insert_with(|| HashMap::new()) // If the key i doesn't exist, initialize a new vector
+            .insert(j, cost); // Append (j, cost) to the vector
+
         // Update the largest node number
         if i > amount_of_nodes {
             amount_of_nodes = i;
@@ -170,64 +164,51 @@ fn read_csv_as_hashmap(filename: &str) -> Result<(HashMap<usize, HashMap<usize,f
     Ok((distances, amount_of_nodes)) // Return the HashMap wrapped in Result
 }
 
-
-fn nearest_neighbor_full_graph(distances: &mut HashMap<usize,HashMap<usize,f64>>, amount_of_nodes: usize) -> (f64, Vec<usize>) { // nearest neighbor for full tree
-    let mut total_min_cost:f64 = 0.0;
+fn nearest_neighbor_full_graph(
+    distances: &mut HashMap<usize, HashMap<usize, f64>>,
+    amount_of_nodes: usize,
+) -> (f64, Vec<usize>) {
+    // nearest neighbor for full tree
+    let mut total_min_cost: f64 = 0.0;
     let mut path = Vec::new();
     path.push(0);
     let mut visited = bitvec![0; amount_of_nodes]; // keeps track of which nodes are visited
-    visited.set(0, true);//assume plan needs to head back to start
+    visited.set(0, true); //assume plan needs to head back to start
     let mut visited_counter: usize = 1;
     let mut current_location: usize = 0;
-   
-    
-    while visited_counter != amount_of_nodes{
+
+    while visited_counter != amount_of_nodes {
         let mut min_cost: f64 = f64::INFINITY;
         let mut node_to_visit = usize::MAX;
-        for (second, cost) in &distances[&current_location] { //finds nearest neighbor
+        for (second, cost) in &distances[&current_location] {
+            //finds nearest neighbor
             // Use `second` (usize) and `cost` (f64) here
-            if  visited[*second] == false && *cost < min_cost
-            {
+            if visited[*second] == false && *cost < min_cost {
                 min_cost = *cost;
                 node_to_visit = *second;
-            } 
+            }
             //println!("Second part: {}, Cost: {}", second, cost);
         }
-        if min_cost != f64::INFINITY { // found a node to visit
+        if min_cost != f64::INFINITY {
+            // found a node to visit
             path.push(node_to_visit);
             total_min_cost = total_min_cost + min_cost;
             //println!("The cost being added {}", min_cost);
             visited_counter = visited_counter + 1;
             current_location = node_to_visit;
-            visited.set(node_to_visit,true);
-            
-        }
-        else {
+            visited.set(node_to_visit, true);
+        } else {
             println!("Could not find a node but graph should be a full graph ERROR");
             process::exit(1);
-        
         }
-        
     }
-        //println!("{:?}, {:?}", path, visited);
-        //println!("{:?}, ", path);
-        //println!("Banned- {:?}", banned_list);
-        (total_min_cost, path)
+    //println!("{:?}, {:?}", path, visited);
+    //println!("{:?}, ", path);
+    //println!("Banned- {:?}", banned_list);
+    (total_min_cost, path)
 }
 
-
-
-
-
-
-
-
-
-
-
-
 fn main() {
-    
     let filename = "sparse_world.csv";
     match read_csv_as_matrix("sparse_world.csv") {
         Ok(distance_matrix) => {
@@ -246,24 +227,63 @@ fn main() {
 
     if filename == "full_world.csv" {
         match read_csv_as_hashmap(filename) {
-            Ok((mut distances, amount_of_nodes)) => {  // ✅ Correct tuple destructuring
+            Ok((mut distances, amount_of_nodes)) => {
+                // ✅ Correct tuple destructuring
                 let (cost, path) = nearest_neighbor_full_graph(&mut distances, amount_of_nodes);
                 println!("Nearest Neighbor full world solution algorithm-");
                 println!("Minimum Cost: {}", cost);
                 println!("Optimal Path: {:?}", path);
             }
-            Err(e) => {  // Handle potential errors
+            Err(e) => {
+                // Handle potential errors
                 eprintln!("Error reading file: {}", e);
             }
-        }    
+        }
     }
-    
+}
 
-    
+#[cfg(test)]
+mod tests {
+    use super::*;
 
+    #[test]
+    fn test_held_karp_algorithm() {
+        let distance_matrix = vec![
+            vec![0.0, 10.0, 15.0, 20.0],
+            vec![10.0, 0.0, 35.0, 25.0],
+            vec![15.0, 35.0, 0.0, 30.0],
+            vec![20.0, 25.0, 30.0, 0.0],
+        ];
 
-    
+        let (cost, path) = held_karp_algorithm(&distance_matrix);
+        assert_eq!(cost, 65.0);
+        assert_eq!(path, vec![0, 1, 3, 2]);
+    }
 
+    #[test]
+    fn test_nearest_neighbor_full_graph() {
+        let mut distances = HashMap::new();
+        distances.insert(0, [(1, 10.0), (2, 15.0), (3, 20.0)].iter().cloned().collect());
+        distances.insert(1, [(0, 10.0), (2, 35.0), (3, 25.0)].iter().cloned().collect());
+        distances.insert(2, [(0, 15.0), (1, 35.0), (3, 30.0)].iter().cloned().collect());
+        distances.insert(3, [(0, 20.0), (1, 25.0), (2, 30.0)].iter().cloned().collect());
 
+        let (cost, path) = nearest_neighbor_full_graph(&mut distances, 4);
+        assert_eq!(cost, 65.0);
+        assert_eq!(path, vec![0, 1, 3, 2]);
+    }
 
+    #[test]
+    fn test_read_csv_as_matrix() {
+        let distance_matrix = read_csv_as_matrix("sparse_world.csv").unwrap();
+        assert_eq!(distance_matrix.len(), 15);
+        assert_eq!(distance_matrix[0].len(), 15);
+    }
+
+    #[test]
+    fn test_read_csv_as_hashmap() {
+        let (distances, amount_of_nodes) = read_csv_as_hashmap("full_world.csv").unwrap();
+        assert_eq!(amount_of_nodes, 15);
+        assert_eq!(distances.len(), 15);
+    }
 }
