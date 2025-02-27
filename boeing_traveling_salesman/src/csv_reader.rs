@@ -1,10 +1,10 @@
-use petgraph::graph::{DiGraph, NodeIndex, EdgeIndex};
+use petgraph::graph::{DiGraph, NodeIndex};
 use csv::Reader;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{self, BufReader};
 use serde::{Serialize, Deserialize};
-use wasm_bindgen::prelude::*;
+//use wasm_bindgen::prelude::*;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Edge {
@@ -15,12 +15,37 @@ pub struct Edge {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Node {
+    #[serde(serialize_with = "as_u64", deserialize_with = "from_u64")]
     pub id: usize,
     pub label: String,
 }
 
+// Serialization for usize
+fn as_u64<S>(x: &usize, serializer: S) -> Result<S::Ok, S::Error> where 
+    S: serde::Serializer,
+{
+    serializer.serialize_u64(*x as u64)
+}
+
+// Deserialization for usize
+fn from_u64<'de, D>(deserializer: D) -> Result<usize, D::Error> where  
+    D: serde::Deserializer<'de>,
+{
+    let value: u64 = serde::Deserialize::deserialize(deserializer)?;
+    Ok(value as usize)
+}
+
+
+// Defining a serializable version of the graph
+#[derive(Serialize, Deserialize)]
+pub struct SerializableGraph {
+    pub nodes: Vec<Node>,
+    pub edges: Vec<Edge>,
+}
+
+
 pub struct CsvGraph {
-    pub graph: DiGraph<String, i64>,
+    pub graph: DiGraph<Node, i64>,
     pub node_map: HashMap<String, NodeIndex>,
 }
 
@@ -51,16 +76,23 @@ impl CsvGraph {
     fn parse_csv<R: std::io::Read>(&mut self, reader: &mut Reader<R>) -> Result<(), io::Error> {
         for result in reader.records() {
             let record = result.map_err(|e| io::Error::new(io::ErrorKind::InvalidData, format!("CSV error: {}", e)))?;
-            let from = record[0].to_string();
-            let to = record[1].to_string();
-            let cost: i64 = record[2].parse().map_err(|_| io::Error::new(io::ErrorKind::InvalidData, "Invalid cost value"))?; 
+            let from = record.get(0).unwrap().to_string();
+            let to = record.get(1).unwrap().to_string();
+            let cost: i64 = record.get(2).unwrap().parse()
+                .map_err(|_| io::Error::new(io::ErrorKind::InvalidData, "Invalid cost value"))?; 
             // Need to work on handling decimals later. Floats are not precise.
 
             // Get/insert the 'from' node
-            let from_index = *self.node_map.entry(from.clone()).or_insert_with(|| self.graph.add_node(from));
+            let from_index = *self.node_map.entry(from.clone()).or_insert_with(|| {
+                let id = self.graph.node_count();
+                self.graph.add_node(Node { id, label: from})
+            });
 
             // Get/insert the 'to' node
-            let to_index = *self.node_map.entry(to.clone()).or_insert_with(|| self.graph.add_node(to));
+            let to_index = *self.node_map.entry(to.clone()).or_insert_with(|| {
+                let id = self.graph.node_count();
+                self.graph.add_node(Node { id, label: to})
+            });
 
             // Add a directed edge with cost
             self.graph.add_edge(from_index, to_index, cost);
@@ -69,24 +101,41 @@ impl CsvGraph {
         Ok(())
     }
 
-    // Get edges in JSON-friendly format
-    pub fn get_edges(&self) -> Vec<Edge> {
-        self.graph.edge_indices().map(|e| {
-            let (from_index, to_index) = self.graph.edge_endpoints(e).unwrap();
-            Edge {
-                from: self.graph[from_index].clone(),
-                to: self.graph[to_index].clone(),
-                cost: self.graph[e],
+    pub fn to_serializable(&self) -> SerializableGraph {
+        let mut nodes = Vec::new();
+        let mut edges = Vec::new();
+
+        for node_index in self.graph.node_indices() {
+            let node = &self.graph[node_index];
+            nodes.push(Node { 
+                id: node.id, 
+                label: node.label.clone(),
+            });
+        }
+
+        for edge_index in self.graph.edge_indices() {
+            if let Some((from, to)) = self.graph.edge_endpoints(edge_index) {
+                let cost = self.graph[edge_index];
+
+                edges.push(Edge {
+                    from: self.graph[from].label.clone(),
+                    to: self.graph[to].label.clone(),
+                    cost
+                });
             }
-        }).collect()
+        }
+
+        SerializableGraph {nodes, edges}
     }
 
-    // Get all nodes in JSON-friendly format
+    // Gets the nodes
     pub fn get_nodes(&self) -> Vec<Node> {
-        self.graph.node_indices().map(|idx| Node {
-            id: idx.index(),
-            label: self.graph[idx].clone(),
-        }).collect()
+        self.to_serializable().nodes
+    }
+
+    // Returns the edges
+    pub fn get_edges(&self) -> Vec<Edge> {
+        self.to_serializable().edges
     }
 }
 

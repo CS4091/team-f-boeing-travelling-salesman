@@ -1,10 +1,8 @@
 mod csv_reader;
 
 use wasm_bindgen::prelude::*;
-use csv_reader::{CsvGraph, Edge, Node};
+use csv_reader::CsvGraph;
 use serde_wasm_bindgen::to_value;
-use console_log;
-use wasm_logger::init;
 
 
 // Logging functions for Wasm targets. Pushes error messages to web console via Javascript.
@@ -56,8 +54,11 @@ impl GraphWrapper {
             graph: CsvGraph::new(),
         }
     }
-    
+   
+    #[wasm_bindgen]
     pub fn load_csv_from_file(&mut self, file_path: String) -> JsValue {
+        let file_path = "../full_world.csv";
+
         // Attempt to load the CSV file!
         match self.graph.load_csv_from_file(file_path) {
             Ok(_) => {
@@ -69,7 +70,7 @@ impl GraphWrapper {
             },
         }
 
-        to_value(&self.graph).unwrap()
+        to_value(&self.graph.to_serializable()).unwrap()
     }
 
     // Load CSV from string. (for WebAssembly) Note: WASM accessible.

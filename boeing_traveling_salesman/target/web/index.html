@@ -3,26 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebAssembly Example</title>
-    <script type="module">
-        import init, { Graph } from '../../pkg/boeing_travelling_salesman.js';
-
-        async function run() {
-            await init();
-
-            let graph = new Graph();
-            let node1 = graph.add_node("A");
-            let node2 = graph.add_node("B");
-            graph.add_edge(node1, node2);
-
-            console.log("Number of nodes:", graph.node_count());
-        }
-
-        run();
-    </script>
+    <title>Boeing Traveling Salesman</title>
+    <script type="module" src="index.js"></script>
 </head>
 <body>
-    <h1>WebAssembly Graph Example</h1>
+    <h1>Graph</h1>
+    <p>Open the console to view the results. Placeholder until graphics</p>
 </body>
 </html>
 
