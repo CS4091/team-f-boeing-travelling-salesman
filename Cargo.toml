@@ -1,0 +1,12 @@
+[package]
+name = "boeing_travelling_salesman"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+getrandom = { version = "0.2", features = ["js"]}
+petgraph = "0.7"
+wasm-bindgen = "0.2.1"   # Necessary for WebAssembly bindings
+bitvec = "1.0"
+[lib]
+crate-type = ["cdylib"]  # Required for WebAssembly builds
