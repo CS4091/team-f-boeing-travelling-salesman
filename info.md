@@ -9,6 +9,7 @@ Then visit this link [click here](http://localhost:8000/target/web)
 #### Wasm-pack Info:
 
 [wasm-pack docs](https://rustwasm.github.io/docs)
+
 [wasm-pack book](https://rustwasm.github.io/docs/book)
 
 - After building, wasm-pack generates files in `/pkg/` directory. The files are the wasm binary, a JS wrapper file, our README, and a package.json file.
@@ -16,7 +17,9 @@ Then visit this link [click here](http://localhost:8000/target/web)
 #### Rust Crates:
 
 serde [docs](https://docs.rs/serde/latest/serde/)
+
 serde-wasm-bindgen [docs](https://docs.rs/serde-wasm-bindgen/latest/serde_wasm_bindgen/)
+
 serde-json [docs](https://docs.rs/serde_json/latest/serde_json/)
 - These crates are used to serialze and deserialize data structures.
 
