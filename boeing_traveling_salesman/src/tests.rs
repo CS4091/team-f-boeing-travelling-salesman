@@ -5,6 +5,7 @@ mod tests{
 
     use crate::*;
     use std::fs;
+    use bitvec::prelude::*;
     //use std::path::Path;
     //use std::error::Error;
 
@@ -61,7 +62,7 @@ mod tests{
     
                 let size = distance_matrix.len();
                 if size <= 20 {
-                    let (cost, path) = held_karp_algorithm(&distance_matrix);
+                    let (cost, path) = crate::algorithms::held_karp_algorithm(&distance_matrix);
     
                     // Test validity of the route
                     let result = is_valid_route(&distance_matrix, &cost, &path);
@@ -99,7 +100,7 @@ mod tests{
                     }
                 };
 
-                let (cost, path) = nearest_neighbor_full_graph(distances);
+                let (cost, path) = crate::algorithms::nearest_neighbor_full_graph(distances);
 
                 // Test validity of the route
                 let result = is_valid_route(&distance_matrix, &cost, &path);
@@ -134,7 +135,7 @@ mod tests{
                     }
                 };
 
-                let (cost, path) = nearest_neighbor_sparse(distances);
+                let (cost, path) = crate::algorithms::nearest_neighbor_sparse(distances);
 
                 // Test validity of the route
                 let result = is_valid_route(&distance_matrix, &cost, &path);
