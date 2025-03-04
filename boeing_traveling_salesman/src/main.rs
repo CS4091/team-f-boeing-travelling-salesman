@@ -1,14 +1,16 @@
 use std::fs;
 use std::error::Error;
-use std::cmp::Ordering;
+
 use std::f64::INFINITY;
 use std::collections::HashMap;
-use std::hash::{Hash,Hasher};
+//use std::collections::LinkedList;
+//use std::hash::{Hash,Hasher};
+//use std::cmp::Ordering;
 use std::io;
 use bitvec::prelude::*;
 use std::process;
-use std::collections::LinkedList;
-use bitvec::prelude::*;
+mod tests;
+
 
 fn read_csv_as_matrix(filename: &str) -> Result<Vec<Vec<f64>>, Box<dyn Error>> { //provides a distance matrix for held_karp_algorithm
     let contents = fs::read_to_string(filename)?; // Read the entire file
@@ -59,61 +61,67 @@ fn read_csv_as_matrix(filename: &str) -> Result<Vec<Vec<f64>>, Box<dyn Error>> {
 
 
 
-fn held_karp_algorithm(distance_matrix: &Vec<Vec<f64>>) -> (f64, Vec<usize>) {
+fn held_karp_algorithm(distance_matrix: &Vec<Vec<f64>>) -> (f64, Vec<usize>) { 
+    // charles files could possibly have no valid path with start node 0 thus this will try start node 1 and so on till valid path found
     let n = distance_matrix.len();
-    let full_mask = (1 << n) - 1; // All nodes visited
-    let mut dp = vec![vec![INFINITY; n]; 1 << n];
-    let mut parent = vec![vec![-1; n]; 1 << n];
+    let full_mask = (1 << n) - 1;
+    
+    for start_node in 0..n { // Try different start nodes until a valid path is found
+        let mut dp = vec![vec![INFINITY; n]; 1 << n];
+        let mut parent = vec![vec![-1; n]; 1 << n];
 
-    // Base case: Starting at node 0, cost is 0
-    dp[1][0] = 0.0;
+        // Base case: Starting at start_node, cost is 0
+        dp[1 << start_node][start_node] = 0.0;
 
-    // Iterate over all subsets of nodes
-    for mask in 1..(1 << n) {
-        for last_visited in 0..n {
-            if mask & (1 << last_visited) != 0 {
-                // Try all possible previous nodes 'prev'
-                for prev in 0..n {
-                    if prev != last_visited && (mask & (1 << prev)) != 0 {
-                        let prev_mask = mask ^ (1 << last_visited);
-                        let new_cost = dp[prev_mask][prev] + distance_matrix[prev][last_visited];
-                        if new_cost < dp[mask][last_visited] {
-                            dp[mask][last_visited] = new_cost;
-                            parent[mask][last_visited] = prev as isize;
+        // Iterate over all subsets of nodes
+        for mask in 1..(1 << n) {
+            for last_visited in 0..n {
+                if mask & (1 << last_visited) != 0 {
+                    for prev in 0..n {
+                        if prev != last_visited && (mask & (1 << prev)) != 0 {
+                            let prev_mask = mask ^ (1 << last_visited);
+                            let new_cost = dp[prev_mask][prev] + distance_matrix[prev][last_visited];
+                            if new_cost < dp[mask][last_visited] {
+                                dp[mask][last_visited] = new_cost;
+                                parent[mask][last_visited] = prev as isize;
+                            }
                         }
                     }
                 }
             }
         }
-    }
 
-    // Find the minimum cost to complete the cycle (not returning to node 0)
-    let mut min_cost = INFINITY;
-    let mut last_node = -1;
-    for i in 1..n {
-        let cost = dp[full_mask][i]; //+ distance_matrix[i][0] dont need to return to start node
-        if cost < min_cost {
-            min_cost = cost;
-            last_node = i as isize;
+        // Find the minimum cost path
+        let mut min_cost = INFINITY;
+        let mut last_node = -1;
+        for i in 0..n {
+            let cost = dp[full_mask][i];
+            if cost < min_cost {
+                min_cost = cost;
+                last_node = i as isize;
+            }
+        }
+
+        // If a valid path is found, reconstruct and return it
+        if min_cost < INFINITY {
+            let mut path = Vec::new();
+            let mut mask = full_mask;
+            let mut current_node = last_node;
+
+            while current_node != -1 {
+                path.push(current_node as usize);
+                let next_node = parent[mask][current_node as usize];
+                mask ^= 1 << (current_node as usize);
+                current_node = next_node;
+            }
+
+            path.reverse();
+            return (min_cost, path);
         }
     }
 
-    // Reconstruct the path
-    let mut path = Vec::new();
-    let mut mask = full_mask;
-    let mut current_node = last_node;
-
-    while current_node != -1 {
-        path.push(current_node as usize);
-        let next_node = parent[mask][current_node as usize];
-        mask ^= 1 << (current_node as usize);
-        current_node = next_node;
-    }
-
-    path.reverse(); // Reverse the path to get the correct order
-    
-
-    (min_cost, path)
+    // If no valid path is found for any start node, return failure
+    (INFINITY, Vec::new())
 }
 
 
@@ -122,7 +130,7 @@ fn held_karp_algorithm(distance_matrix: &Vec<Vec<f64>>) -> (f64, Vec<usize>) {
 
 
 
-fn read_csv_as_hashmap(filename: &str) -> Result<(HashMap<usize, HashMap<usize,f64>>, usize), io::Error> { 
+fn read_csv_as_hashmap(filename: &str) -> Result<HashMap<usize, HashMap<usize,f64>>, io::Error> { 
     // Makes A nested HashMap, first node given gives you another hashMap, then give node you are heading to, to get cost
     // Saves space when dealing with sparse trees and provides quick look up of costs. 
     let mut distances: HashMap<usize, HashMap<usize, f64>> = HashMap::new();
@@ -151,30 +159,23 @@ fn read_csv_as_hashmap(filename: &str) -> Result<(HashMap<usize, HashMap<usize,f
         max_node = max_node.max(node1).max(node2);
         edges.push((node1, node2, cost));
     }
-    let mut amount_of_nodes: usize = 0;
+
     for (i, j, cost) in edges {
         // Insert or append the (j, cost) tuple to the vector at distances[i]
         distances.entry(i)
             .or_insert_with(|| HashMap::new())  // If the key i doesn't exist, initialize a new vector
             .insert(j, cost);         // Append (j, cost) to the vector
     
-        // Update the largest node number
-        if i > amount_of_nodes {
-            amount_of_nodes = i;
-        }
-        if j > amount_of_nodes {
-            amount_of_nodes = j;
-        }
     }
-    amount_of_nodes = amount_of_nodes + 1; // adds one to account for node 0
-    Ok((distances, amount_of_nodes)) // Return the HashMap wrapped in Result
+    Ok(distances) // Return the HashMap wrapped in Result
 }
 
 
-fn nearest_neighbor_full_graph(distances: &mut HashMap<usize,HashMap<usize,f64>>, amount_of_nodes: usize) -> (f64, Vec<usize>) { // nearest neighbor for full tree
+fn nearest_neighbor_full_graph(distances: HashMap<usize,HashMap<usize,f64>>) -> (f64, Vec<usize>) { // nearest neighbor for full tree
     let mut total_min_cost:f64 = 0.0;
     let mut path = Vec::new();
     path.push(0);
+    let amount_of_nodes = distances.keys().len();
     let mut visited = bitvec![0; amount_of_nodes]; // keeps track of which nodes are visited
     visited.set(0, true);//assume plan needs to head back to start
     let mut visited_counter: usize = 1;
@@ -221,6 +222,133 @@ fn nearest_neighbor_full_graph(distances: &mut HashMap<usize,HashMap<usize,f64>>
 
 
 
+fn nearest_neighbor_sparse(distances: HashMap<usize,HashMap<usize,f64>>) -> (f64, Vec<usize>) { // this might work better as a recursive function
+    let mut total_min_cost:f64 = 0.0;
+    // Collect the keys of distances into a Vec<usize>
+    let nodes = distances.keys();
+    let mut collection: Vec<usize> = nodes.cloned().collect();
+    collection.sort(); // Ensure deterministic order
+    
+    let mut paths: Vec<Vec<usize>> = Vec::new();
+
+    // Iterate over each element in collection
+    for node in collection { // makes a vector of length one paths ex - [[0],[1], [2]]
+        let mut new_path: Vec<usize> = Vec::new();
+        new_path.push(node); 
+        paths.push(new_path); 
+    }
+    
+    
+    
+    let mut banned_paths: Vec<Vec<usize>> = Vec::new(); // prevents cycles has a large worse case memory usage need to manage better
+    let mut _banned_counter:usize = 0;
+    let mut counter = 0;
+    while paths.len() > 1 {
+           
+        
+            if let Some(path) = paths.pop() { // grab path at front of list
+                let mut min_cost: f64 = f64::INFINITY; 
+                let mut path_to_add:Vec<usize> = Vec::new();
+                    for possible_path_to_add in paths.clone(){
+                            if let Some(front_node) = path.last() { // gets the last location of the popped path
+                                if let Some(last_node) = possible_path_to_add.first() { // gets the front location of another path (going to try to connect the two paths)
+                                    if let Some(inner_map) = distances.get(&front_node) { // use hashmap to get cost
+                                        if let Some(&cost) = inner_map.get(&last_node) { // use hashmap to get cost
+                                                if path != possible_path_to_add &&cost < min_cost // checks if visited yet and cost is cheaper
+                                                {
+                                                    let mut temp_path = path.clone();
+                                                    temp_path.extend(possible_path_to_add.clone());
+                                                    if !banned_paths.contains(&temp_path){
+                                                        min_cost = cost;
+                                                        path_to_add = possible_path_to_add;
+                                                    }
+                                                } 
+
+                                            }
+                                            else{
+                                                //println!("No arc between paths");
+                                            }
+                                        } 
+                                        else {
+                                            //println!("front node has no valid arcs to anywhere");
+                                        }
+                                        
+                                }      
+                                else {
+                                    println!("Path has no nodes");
+                                    process::exit(1);
+                                } 
+                            }
+                            else { //covers path.last and path.first in above if statement
+                                println!("Path has no nodes");
+                                process::exit(1);
+                            }
+                    }      
+                    if min_cost != f64::INFINITY { // found a node to visit
+                                paths.retain(|x| *x != path_to_add); // get rid of path from main vector of paths
+                                let mut new_path = path.clone();
+                                new_path.extend(path_to_add.clone());
+                                paths.insert(0,new_path.clone()); // adds the new combined paths to the paths vector
+                                total_min_cost = total_min_cost + min_cost;
+
+                
+                    }
+                    else {// no path found so pop one in path and stufff
+                        if path.len() > 1{ 
+                            let mut new_path = path;
+                            banned_paths.push(new_path.clone()); // bans path to prevent cycles from repeating paths
+                            _banned_counter += 1;
+                            if let Some(last_node) = new_path.pop() { // pop node out of path
+                                if let Some(temp_node) = new_path.last() { 
+                                    total_min_cost = total_min_cost - distances[temp_node][&last_node]; // undoes the cost of that path
+                                    paths.push(new_path); // adds path with popped node back to main paths
+                                    let mut temp_path: Vec<usize> = Vec::new();
+                                    temp_path.push(last_node);
+                                    paths.insert(0,temp_path) // adds the node that was popped out of path back to front of vector of paths
+                                    
+                                }
+                                else { // should never run unless path somehow becomes empty
+                                    println!("No node to fall back to, path does not contain start node anymore!");
+                                    process::exit(1);
+                                }
+                            } else { //handles error of possible empty vector
+                                println!("The start node had no valid edges to go to ERROR!");
+                                process::exit(1);
+                            }
+
+                        }
+                        else {
+                            paths.insert(0,path) // insert single length paths at front of list
+                        }
+                        
+                    
+                        
+                    }
+                } else {
+                    println!("No paths left to process!");
+                    process::exit(1);
+                }
+            
+    
+        counter = counter + 1;
+        
+    }
+    //println!("Banned- {:?}, Amount of banned paths - {}", banned_paths, banned_paths.len()); // for developement and testing
+    //println!("Amount of banned paths - {}", _banned_counter);
+    if let Some(path) = paths.first(){
+        (total_min_cost, path.clone())
+    }
+    else
+    {
+        println!("No path generated");
+        process::exit(1);
+    }
+    
+}
+
+
+
+
 
 
 
@@ -228,8 +356,8 @@ fn nearest_neighbor_full_graph(distances: &mut HashMap<usize,HashMap<usize,f64>>
 
 fn main() {
     
-    let filename = "sparse_world.csv";
-    match read_csv_as_matrix("sparse_world.csv") {
+    let filename = "full_world.csv";
+    match read_csv_as_matrix(filename) {
         Ok(distance_matrix) => {
             // Check if the matrix is 20x20 or smaller
             if distance_matrix.len() <= 20 && distance_matrix.iter().all(|row| row.len() <= 20) {
@@ -246,8 +374,8 @@ fn main() {
 
     if filename == "full_world.csv" {
         match read_csv_as_hashmap(filename) {
-            Ok((mut distances, amount_of_nodes)) => {  // ✅ Correct tuple destructuring
-                let (cost, path) = nearest_neighbor_full_graph(&mut distances, amount_of_nodes);
+            Ok(distances) => {  
+                let (cost, path) = nearest_neighbor_full_graph( distances);
                 println!("Nearest Neighbor full world solution algorithm-");
                 println!("Minimum Cost: {}", cost);
                 println!("Optimal Path: {:?}", path);
@@ -257,13 +385,20 @@ fn main() {
             }
         }    
     }
-    
 
-    
-
-
-    
-
+    if filename == filename {
+        match read_csv_as_hashmap(filename) {
+            Ok(distances) => {  
+                let (cost, path) = nearest_neighbor_sparse( distances);
+                println!("Nearest Neighbor sparse world solution algorithm-");
+                println!("Minimum Cost: {}", cost);
+                println!("Optimal Path: {:?}", path);
+            }
+            Err(e) => {  // Handle potential errors
+                eprintln!("Error reading file: {}", e);
+            }
+        }    
+    }
 
 
 }
