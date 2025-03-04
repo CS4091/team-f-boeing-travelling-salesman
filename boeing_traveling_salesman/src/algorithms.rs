@@ -143,7 +143,7 @@ pub fn nearest_neighbor_sparse(distances: HashMap<usize,HashMap<usize,f64>>) -> 
     let mut banned_paths: Vec<Vec<usize>> = Vec::new(); // prevents cycles has a large worse case memory usage need to manage better
     let mut _banned_counter:usize = 0;
     let mut counter = 0;
-    while paths.len() > 1 {
+    while paths.len() > 1 { // TODO Fix infinite loop that can happend if nothing can connect. 
            
         
             if let Some(path) = paths.pop() { // grab path at front of list
