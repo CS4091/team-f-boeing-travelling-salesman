@@ -1,5 +1,5 @@
 [package]
-name = "boeing_travelling_salesman"
+name = "boeing_traveling_salesman"
 version = "0.1.0"
 edition = "2021"
 
@@ -10,3 +10,6 @@ wasm-bindgen = "0.2.1"   # Necessary for WebAssembly bindings
 bitvec = "1.0"
 [lib]
 crate-type = ["cdylib"]  # Required for WebAssembly builds
+[[bin]]
+name = "boeing_travelling_salesman_bin"  # Renaming the binary target
+path = "src/main.rs"  # Or the correct path to your binary file
