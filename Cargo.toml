@@ -1,7 +1,7 @@
 [package]
 name = "boeing_travelling_salesman"
 version = "0.0.0"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
 getrandom = { version = "0.2", features = ["js"]}

@@ -16,34 +16,56 @@ In light of these facts, this project is an attempt to provide a user friendly g
 TODO
 ### Algorithmic Implementations
 TODO
-### Software Development Toolchain
-TODO
+## Contributing
+In order to establish consistency among contributors and aid reviewers in evaluating contributions,
+below we detail standards to serve these ends.
+### Developer Toolchain Setup
+Start by familiarizing yourself with the tools employed on this project. Resources for doing so will be provided
+in the following sections.
 #### Cargo
 TODO
 #### Web Assembly Packages
 TODO
 #### Selenium
 TODO
-## Contributing
-In order to establish consistency among contributors and aid reviewers in evaluating contributions,
-below we detail standards to serve these ends.
-### Environment Setup
-TODO
-#### Troubleshooting
+#### Cargo LLVM Coverage
 TODO
 ### Opening an Issue/Creating a Branch
-TODO
+
 ### Code Style Guide
 TODO
 ### Commit Style Guide
-TODO
+For this project, we have attempted to follow the guidance expositied by [cbeams](https://cbea.ms/author/cbeams/), which can 
+be summarized in the following 7 rules:
+1. Separate subject from body with a blank line.
+2. Limit the subject line to 50 characters.
+3. Capitalize the subject line.
+4. Do not end the subject line with a period.
+5. Use the [imperative mood](https://en.wikipedia.org/wiki/Imperative_mood) in the subject line.
+6. Wrap the body at 72 characters.
+7. Use the body to explain what the code does and why.
+
+In brief, it is most important to remember that a commit message should be concerned with *justifying* changes, not explaining 
+technical implementations details.
 ### Opening Pull Requests/Merging to `master`
-TODO
+In order to protect the integrety of our deployment codebase, we have restricted direct or forceful pushes to 
+the `master` branch. As such, to see your contribution reflected on the `master` branch **ALL** code must undergo review.
+Begin by [creating a pull request](https://github.com/CS4091/team-f-boeing-travelling-salesman/pulls), which notifies other
+maintainers that there is code that needs review.
 #### Code Review
-When reviewing _:
-- [ ] TODO
+When reviewing another contributor's code, it is advised to run through the following checklist (at a minimum):
+- [ ] Pull and checkout the pertinent branch. Attempt to run the code locally in order to verify a lack of 
+compliation errors and ensure that any new features work as intended.
+- [ ] Manually ensure that any commits and corresponding commit messages adhere to the recommendations outlined above.
+- [ ] Run the Rust unit test suite.
+- [ ] Run the JavaScript Selenium integration test suite.
+- [ ] Run code coverage tests in order to assure that reasonable measures were take to test any new code or 
+previously untested code.
+- [ ] Run formatting tools to ensure formatting compliance.
+- [ ] Manually confirm that reasonable documentation was provided for any new functions, classes, modules, struct, et cetera.
 
 If the code you are reviewing is found to be in violation of these guidelines, ~~take the contributor out back~~
-kindly refer the contributor in question to the portion(s) of this document that pertain to your concerns.
+kindly refer the contributor in question to the portion(s) of this document that pertain to your concerns. Keep
+in mind that reviews and comments should reflect a certain professional charity, and refrain from personal comments.
 
 Once code receives at least one manual approval, it is acceptable to merge onto the `master` branch.
