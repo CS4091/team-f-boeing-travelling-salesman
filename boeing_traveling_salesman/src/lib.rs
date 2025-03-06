@@ -1,10 +1,11 @@
 mod algorithms;
 mod graph;
-mod graph_utils;
+
+use std::collections::HashMap;
 
 use wasm_bindgen::prelude::*;
 use graph::CsvGraph;
-use serde_wasm_bindgen::to_value;
+use serde_wasm_bindgen::{from_value, to_value};
 use serde::{Serialize, Deserialize};
 
 
@@ -62,17 +63,26 @@ pub fn held_karp_wasm(distance_matrix: JsValue) -> Result<JsValue, JsValue> {
     let result = AlgorithmResult {cost, path};
 
     //Convert back to JsValue
-    JsValue::from_serde(&result).map_err(|e| {
+    to_value(&result).map_err(|e| {
         JsValue::from_str(&format!("Failed to serialize result: {}", e))
     })
 }
 
 #[wasm_bindgen]
 pub fn nearest_neighbor_full_wasm(distance_matrix: JsValue) -> Result<JsValue, JsValue> {
-    let distance_matrix: Vec<Vec<f64>> = from_value(&distance_matrix)
+    let distance_matrix: Vec<Vec<f64>> = from_value(distance_matrix)
         .map_err(|e| JsValue::from_str(&format!("Failed to deserialize input: {}", e)))?;
 
-    let (cost, path) = algorithms::nearest_neighbor_full_graph(&distance_matrix);
+    let mut distance_map: HashMap<usize, HashMap<usize, f64>> = HashMap::new();
+
+    for (i, row) in distance_matrix.iter().enumerate() {
+        let mut inner_map = HashMap::new();
+        for (j, &value) in row.iter().enumerate() {
+            inner_map.insert(j, value);
+        }
+        distance_map.insert(i, inner_map);
+    }
+    let (cost, path) = algorithms::nearest_neighbor_full_graph(distance_map);
 
     let result = AlgorithmResult { cost, path };
     to_value(&result).map_err(|e| JsValue::from_str(&format!("Failed to serialize output: {}", e)))
@@ -80,10 +90,19 @@ pub fn nearest_neighbor_full_wasm(distance_matrix: JsValue) -> Result<JsValue, J
 
 #[wasm_bindgen]
 pub fn nearest_neighbor_sparse_wasm(adj_list: JsValue) -> Result<JsValue, JsValue> {
-    let adj_list: Vec<(usize, usize, f64)> = from_value(&adj_list)
+    let adj_list: Vec<(usize, usize, f64)> = from_value(adj_list)
         .map_err(|e| JsValue::from_str(&format!("Failed to deserialize input: {}", e)))?;
 
-    let (cost, path) = algorithms::nearest_neighbor_sparse(&adj_list);
+    let mut distances: HashMap<usize, HashMap<usize, f64>> = HashMap::new();
+
+    for (from, to, cost) in adj_list {
+        distances
+            .entry(from)
+            .or_insert_with(HashMap::new)
+            .insert(to, cost);
+    }
+
+    let (cost, path) = algorithms::nearest_neighbor_sparse(distances);
 
     let result = AlgorithmResult { cost, path };
     to_value(&result).map_err(|e| JsValue::from_str(&format!("Failed to serialize output: {}", e)))

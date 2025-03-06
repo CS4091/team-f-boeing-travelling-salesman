@@ -1,10 +1,11 @@
 use petgraph::csr::IndexType;
 use petgraph::graph::{DiGraph, NodeIndex};
 use csv::Reader;
+use serde_wasm_bindgen::{from_value, to_value};
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{self, BufReader};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use wasm_bindgen::prelude::*;
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -36,6 +37,22 @@ fn from_u64<'de, D>(deserializer: D) -> Result<usize, D::Error> where
     Ok(value as usize)
 }
 
+// Serialization for NodeIndex
+fn serialize_node_index<S>(node_index: &NodeIndex, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    serializer.serialize_u64(node_index.index() as u64)
+}
+
+// Deserializer for NodeIndex
+fn deserialize_node_index<'de, D>(deserializer: D) -> Result<NodeIndex, D::Error>
+where
+    D: Deserializer<'de>
+{
+    let index: u64 = Deserialize::deserialize(deserializer)?;
+    Ok(NodeIndex::new(index as usize))
+}
 
 // Defining a serializable version of the graph
 #[derive(Serialize, Deserialize)]
@@ -168,33 +185,51 @@ impl CsvGraph {
 }
 
 #[wasm_bindgen]
-pub fn convert_to_graph(path: Vec<usize>, distance_matrix: &Vec<Vec<f64>>) -> CsvGraph {
-    let mut new_graph = CsvGraph::new();
+pub fn convert_to_graph(path: JsValue, distance_matrix: JsValue) -> Result<JsValue, JsValue> {
+    let path: Vec<usize> = from_value(path)
+        .map_err(|e| JsValue::from_str(&format!("Failed to deserialize path: {}", e)))?;
+    let distance_matrix: Vec<Vec<f64>> = from_value(distance_matrix)
+        .map_err(|e| JsValue::from_str(&format!("Failed to deserialize distance_matrix: {}", e)))?;
 
+    let mut new_graph = CsvGraph::new();
+ 
     for i in 0..path.len() - 1 {
         let from_index = path[i];
         let to_index = path[i + 1];
         let cost = distance_matrix[from_index][to_index];
 
-        //Handle from node
+         // Handle from node
         let from_label = format!("Node {}", from_index);
-        let from_node = *new_graph.node_map.entry(from_label.clone()).or_insert_with(|| {
-            let id = new_graph.graph.node_count();
-            new_graph.graph.add_node(Node { id, label: from_label })
-        });
+        let from_node_index = {
+            let entry = new_graph.node_map.entry(from_label.clone());
+            entry.or_insert_with(|| {
+                let id = new_graph.graph.node_count();
+                new_graph.graph.add_node(Node { id, label: from_label })
+            }).index()
+        };
 
-        //Handle to node
+        // Handle to node (in a separate block)
         let to_label = format!("Node {}", to_index);
-        let to_node = *new_graph.node_map.entry(to_label.clone()).or_insert_with(|| {
-            let id = new_graph.graph.node_count();
-            new_graph.graph.add_node(Node {id, label: to_label})
-        });
+        let to_node_index = {
+            let entry = new_graph.node_map.entry(to_label.clone());
+            entry.or_insert_with(|| {
+                let id = new_graph.graph.node_count();
+                new_graph.graph.add_node(Node { id, label: to_label })
+            }).index()
+        };
+
+        let from_node_index = NodeIndex::new(from_index);
+        let to_node_index = NodeIndex::new(to_index);
+
 
         // Add directed weighted edge
-        new_graph.graph.add_edge(from_node, to_node, cost);
+        new_graph.graph.add_edge(from_node_index, to_node_index, cost);
     }
 
-    new_graph
+    let serializable_graph = new_graph.to_serializable();
+
+    to_value(&serializable_graph).map_err(|e| JsValue::from_str(&format!("Failed to serialize output: {}", e)))
+    
 }
 
 
