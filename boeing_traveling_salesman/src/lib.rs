@@ -1,8 +1,11 @@
-mod csv_reader;
+mod algorithms;
+mod graph;
+mod graph_utils;
 
 use wasm_bindgen::prelude::*;
-use csv_reader::CsvGraph;
+use graph::CsvGraph;
 use serde_wasm_bindgen::to_value;
+use serde::{Serialize, Deserialize};
 
 
 // Logging functions for Wasm targets. Pushes error messages to web console via Javascript.
@@ -38,6 +41,52 @@ fn log_usize(a: usize) {
 #[allow(unused)]
 fn log_i64(a: i64) {
     println!("{}", a);
+}
+
+#[derive(Serialize, Deserialize)]
+struct AlgorithmResult {
+    cost: f64,
+    path: Vec<usize>,
+}
+
+//Wasm friendly Algorithm wrappers
+
+#[wasm_bindgen]
+pub fn held_karp_wasm(distance_matrix: JsValue) -> Result<JsValue, JsValue> {
+    //Deserialze JsValue into Vec<Vec<f64>> because wasm didn't want to play nice
+    let distance_matrix: Vec<Vec<f64>> = from_value(distance_matrix)
+        .map_err(|e| JsValue::from_str(&format!("Failed to deserialize intput: {}", e)))?;
+
+    let (cost, path) = algorithms::held_karp_algorithm(&distance_matrix);
+
+    let result = AlgorithmResult {cost, path};
+
+    //Convert back to JsValue
+    JsValue::from_serde(&result).map_err(|e| {
+        JsValue::from_str(&format!("Failed to serialize result: {}", e))
+    })
+}
+
+#[wasm_bindgen]
+pub fn nearest_neighbor_full_wasm(distance_matrix: JsValue) -> Result<JsValue, JsValue> {
+    let distance_matrix: Vec<Vec<f64>> = from_value(&distance_matrix)
+        .map_err(|e| JsValue::from_str(&format!("Failed to deserialize input: {}", e)))?;
+
+    let (cost, path) = algorithms::nearest_neighbor_full_graph(&distance_matrix);
+
+    let result = AlgorithmResult { cost, path };
+    to_value(&result).map_err(|e| JsValue::from_str(&format!("Failed to serialize output: {}", e)))
+}
+
+#[wasm_bindgen]
+pub fn nearest_neighbor_sparse_wasm(adj_list: JsValue) -> Result<JsValue, JsValue> {
+    let adj_list: Vec<(usize, usize, f64)> = from_value(&adj_list)
+        .map_err(|e| JsValue::from_str(&format!("Failed to deserialize input: {}", e)))?;
+
+    let (cost, path) = algorithms::nearest_neighbor_sparse(&adj_list);
+
+    let result = AlgorithmResult { cost, path };
+    to_value(&result).map_err(|e| JsValue::from_str(&format!("Failed to serialize output: {}", e)))
 }
 
 #[wasm_bindgen]

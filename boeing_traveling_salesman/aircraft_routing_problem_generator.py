@@ -136,7 +136,7 @@ def create_world_files(world_name: str, edges: typing.List[WorldEdge]):
 
 
 if __name__ == '__main__':
-    num_nodes = 15
+    num_nodes = 20
     connectivity_ratio = 0.3
     min_cost = 1.0
     max_cost = 10.0
