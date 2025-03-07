@@ -67,7 +67,9 @@ fn main() {
         }    
     }
     println!("");
-    crate::analyzer::algorithm_analyzer("Sparse graphs with 1 to 20 locations".to_string(), "test-csv-sparse".to_string(), 1,20); // needs table name, folder name for csv files, location lower bound, location upper bound
-    crate::analyzer::algorithm_analyzer("Sparse graphs with 70 to 100 locations".to_string(), "test-csv-sparse".to_string(), 70,150);
-    crate::analyzer::algorithm_analyzer("Full graphs with 70 to 100 locations".to_string(), "test-csv-full-world".to_string(), 70,150);
+    crate::analyzer::algorithm_analyzer("Sparse graphs with 15 to 20 locations".to_string(), "test-csv-sparse".to_string(), 15,20); // needs table name, folder name for csv files, location lower bound, location upper bound
+    crate::analyzer::algorithm_analyzer("Sparse graphs with 100 to 100 locations".to_string(), "test-csv-sparse".to_string(), 100,100);
+    crate::analyzer::algorithm_analyzer("Full graphs with 100 to 100 locations".to_string(), "test-csv-full-world".to_string(), 100,100);
+    crate::analyzer::algorithm_analyzer("Sparse graphs with 1000 to 1000 locations".to_string(), "test-csv-sparse".to_string(), 1000,1000);
+    crate::analyzer::algorithm_analyzer("Full graphs with 1000 to 1000 locations".to_string(), "test-csv-full-world".to_string(), 1000,1000);
 }
