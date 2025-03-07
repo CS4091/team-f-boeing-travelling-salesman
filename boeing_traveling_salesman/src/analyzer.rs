@@ -132,7 +132,7 @@ pub fn algorithm_analyzer(table_name:String, folder_name:String, lower_bound: us
         "Yes",
         "No",
         "Yes",
-        "No"
+        "Yes"
     );
     println!( // full nearest algorithm
         "|{:<20}|{:<19.6}|{:<13.6}|{:<13.6}|{:<13.6}|{:<13.6}|{:<16}|{:<14}|{:<13}|{:<15}|",
@@ -142,10 +142,10 @@ pub fn algorithm_analyzer(table_name:String, folder_name:String, lower_bound: us
         full_nearest_data[2], // max cost
         full_nearest_data[3] as f64 / routes_planned_counter as f64,  // Ensure floating-point division, avg time
         full_nearest_data[4], // max cost
-        "Yes",
+        "No",
         "No",
         "Yes",
-        "No"
+        "Yes"
     );
 
     //----------------------------------------------------------------------------------------//
