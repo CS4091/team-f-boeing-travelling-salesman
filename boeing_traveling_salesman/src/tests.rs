@@ -52,7 +52,7 @@ mod tests{
             // Ensure it's a file and has a .csv extension
             if file_path.is_file() && file_path.extension().map_or(false, |ext| ext == "csv") {
                 println!("Testing file: {:?}", file_path.display());
-                let distance_matrix = match read_csv_as_matrix(file_path.to_str().unwrap()) {
+                let distance_matrix = match crate::csv_readers::read_csv_as_matrix(file_path.to_str().unwrap()) {
                     Ok(matrix) => matrix,
                     Err(e) => {
                         eprintln!("Error reading {}: {}", file_path.display(), e);
@@ -85,14 +85,14 @@ mod tests{
             // Ensure it's a file and has a .csv extension
             if file_path.is_file() && file_path.extension().map_or(false, |ext| ext == "csv") {
                 println!("Testing file: {:?}", file_path.display());
-                let distances = match read_csv_as_hashmap(file_path.to_str().unwrap()) {   // gets hashmap for route algorithm
+                let distances = match crate::csv_readers::read_csv_as_hashmap(file_path.to_str().unwrap()) {   // gets hashmap for route algorithm
                     Ok(distances) => distances,
                     Err(e) => {
                         eprintln!("Error reading {}: {}", file_path.display(), e);
                         continue; // Skip this file and proceed to the next
                     }
                 };
-                let distance_matrix = match read_csv_as_matrix(file_path.to_str().unwrap()) { // gets distance matrix for validating route function
+                let distance_matrix = match crate::csv_readers::read_csv_as_matrix(file_path.to_str().unwrap()) { // gets distance matrix for validating route function
                     Ok(matrix) => matrix,
                     Err(e) => {
                         eprintln!("Error reading {}: {}", file_path.display(), e);
@@ -100,7 +100,7 @@ mod tests{
                     }
                 };
 
-                let (cost, path) = crate::algorithms::nearest_neighbor_full_graph(distances);
+                let (cost, path) = crate::algorithms::nearest_neighbor_full_graph(&distances);
 
                 // Test validity of the route
                 let result = is_valid_route(&distance_matrix, &cost, &path);
@@ -120,14 +120,14 @@ mod tests{
             // Ensure it's a file and has a .csv extension
             if file_path.is_file() && file_path.extension().map_or(false, |ext| ext == "csv") {
                 println!("Testing file: {:?}", file_path.display());
-                let distances = match read_csv_as_hashmap(file_path.to_str().unwrap()) {   // gets hashmap for route algorithm
+                let distances = match crate::csv_readers::read_csv_as_hashmap(file_path.to_str().unwrap()) {   // gets hashmap for route algorithm
                     Ok(distances) => distances,
                     Err(e) => {
                         eprintln!("Error reading {}: {}", file_path.display(), e);
                         continue; // Skip this file and proceed to the next
                     }
                 };
-                let distance_matrix = match read_csv_as_matrix(file_path.to_str().unwrap()) { // gets distance matrix for validating route function
+                let distance_matrix = match crate::csv_readers::read_csv_as_matrix(file_path.to_str().unwrap()) { // gets distance matrix for validating route function
                     Ok(matrix) => matrix,
                     Err(e) => {
                         eprintln!("Error reading {}: {}", file_path.display(), e);
@@ -135,7 +135,7 @@ mod tests{
                     }
                 };
 
-                let (cost, path) = crate::algorithms::nearest_neighbor_sparse(distances);
+                let (cost, path) = crate::algorithms::nearest_neighbor_sparse(&distances);
 
                 // Test validity of the route
                 let result = is_valid_route(&distance_matrix, &cost, &path);

@@ -131,12 +131,12 @@ def create_world_files(world_name: str, edges: typing.List[WorldEdge]):
     """
     puml_path = pathlib.Path(f'./{world_name}.puml')
     data_path = pathlib.Path(f'./{world_name}.csv')
-    write_puml(output_filepath=puml_path, edges=edges)
+    #write_puml(output_filepath=puml_path, edges=edges)
     write_data_file(output_filepath=data_path, edges=edges)
 
 
 if __name__ == '__main__':
-    num_nodes = 20
+    num_nodes = 15
     connectivity_ratio = 0.3
     min_cost = 1.0
     max_cost = 10.0
@@ -145,7 +145,7 @@ if __name__ == '__main__':
     sparse_edges: typing.List[WorldEdge] = generate_sparsely_connected_world(num_nodes=num_nodes, connectivity_ratio=connectivity_ratio,
                                                                              min_cost=min_cost, max_cost=max_cost)
     
-    create_world_files('full_world', full_edges)
-    create_world_files('sparse_world', sparse_edges)
+    create_world_files('full_15_world4', full_edges)
+    create_world_files('sparse_15_world4', sparse_edges)
 
 

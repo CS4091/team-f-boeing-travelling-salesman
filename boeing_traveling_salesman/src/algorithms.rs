@@ -1,8 +1,4 @@
 
-
-
-
-
 use std::f64::INFINITY;
 use std::collections::HashMap;
 use bitvec::prelude::*;
@@ -71,7 +67,7 @@ pub fn held_karp_algorithm(distance_matrix: &Vec<Vec<f64>>) -> (f64, Vec<usize>)
     (INFINITY, Vec::new())
 }
 
-pub fn nearest_neighbor_full_graph(distances: HashMap<usize,HashMap<usize,f64>>) -> (f64, Vec<usize>) { // nearest neighbor for full tree
+pub fn nearest_neighbor_full_graph(distances: &HashMap<usize,HashMap<usize,f64>>) -> (f64, Vec<usize>) { // nearest neighbor for full tree
     let mut total_min_cost:f64 = 0.0;
     let mut path = Vec::new();
     path.push(0);
@@ -122,7 +118,7 @@ pub fn nearest_neighbor_full_graph(distances: HashMap<usize,HashMap<usize,f64>>)
 
 
 
-pub fn nearest_neighbor_sparse(distances: HashMap<usize,HashMap<usize,f64>>) -> (f64, Vec<usize>) {
+pub fn nearest_neighbor_sparse(distances: &HashMap<usize,HashMap<usize,f64>>) -> (f64, Vec<usize>) {
     let mut total_min_cost:f64 = 0.0;
     // Collect the keys of distances into a Vec<usize>
     let nodes = distances.keys();
