@@ -1,0 +1,19 @@
+body {
+    background-color: lightblue;
+    height: 97vh;
+    width: 98vw;
+}
+
+#canvas {
+    border: 5px solid black;
+    background-color: white;
+    margin: 0;
+    width: 100%;
+    height: 97vh;
+}
+
+.flex-parent {
+    display: grid;
+    width: 100%;
+    grid-template-columns: 25% 75%;
+}
